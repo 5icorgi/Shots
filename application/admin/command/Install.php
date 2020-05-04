@@ -225,7 +225,7 @@ class Install extends Command
         // 修改后台入口
         $adminName = '';
         if (is_file($adminFile)) {
-            $adminName = Random::alpha(10) . '.php';
+            $adminName = Random::alpha(8) . '.php';
             rename($adminFile, ROOT_PATH . 'public' . DS . $adminName);
         }
 
