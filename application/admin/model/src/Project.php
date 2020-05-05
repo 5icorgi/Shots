@@ -22,13 +22,19 @@ class Project extends Model
     protected $append = [
 
     ];
+
+    function getProjectData()
+    {
+        $list = $this->field('project_name')->select();
+        $projectdata = [];
+        // collection($list)->toArray();
+        foreach ($list as $k => $v){
+            $v = $v['project_name'];
+            $projectdata[$v] = $v;
+        }
+        return $projectdata;
+    }
     
-
-    
-
-
-
-
 
 
 

@@ -37,7 +37,7 @@ class Sub extends Model
         }
     }
 
-    public function addSubDomian($domain, $subdomain, $ip, $city)
+    public function addSubDomian($domain, $subdomain, $ip, $city, $is_private, $is_cdn)
     {
 
         if($this->existsSubDomain($subdomain)){
@@ -51,6 +51,13 @@ class Sub extends Model
                 'alivescan'=>'no_scan',
                 'portscan'=>'no_scan',
             ];
+            if($is_cdn){
+                $data['portscan'] = 'is_cdn';
+            }
+            if($is_private){
+                $data['alivescan'] = 'is_private';
+                $data['portscan'] = 'is_private';
+            }
             $this->data($data, true)->isUpdate(false)->save();
             return true;
         }

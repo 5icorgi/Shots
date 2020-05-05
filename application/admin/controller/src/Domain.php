@@ -26,7 +26,7 @@ class Domain extends Backend
         $this->model = new \app\admin\model\src\Domain;
         $this->project_model = new \app\admin\model\src\Project;
         $this->sub_model = new \app\admin\model\manage\Sub;
-        $projectdata = $this->getProjectData();
+        $projectdata = $this->project_model->getProjectData();
         $this->view->assign('projectdata', $projectdata);
     }
 
@@ -60,18 +60,6 @@ class Domain extends Backend
         return $this->view->fetch();
     }
 
-
-    private function getProjectData()
-    {
-        $list = $this->project_model->field('project_name')->select();
-        $projectdata = [];
-        // collection($list)->toArray();
-        foreach ($list as $k => $v){
-            $v = $v['project_name'];
-            $projectdata[$v] = $v;
-        }
-        return $projectdata;
-    }
 
     public function add_sub($ids = null)
     {

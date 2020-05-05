@@ -92,8 +92,10 @@ class Task extends Api
                     $subdomain = $v['subdomain'];
                     $ip = $v['subdomain_ip'];
                     $city = $v['city'];
+                    $is_private = $v['is_private'];
+                    $is_cdn = $v['is_cdn'];
                     if(substr($subdomain, strpos($subdomain, '.')+1)==$domain){
-                        $sub->addSubDomian($domain, $subdomain, $ip, $city);
+                        $sub->addSubDomian($domain, $subdomain, $ip, $city, $is_private, $is_cdn);
                         $domain_data['count'] += 1;
                     }
                 }
@@ -122,7 +124,7 @@ class Task extends Api
         if($this->request->isPost()){
             (new App())->check_key($this->request->get('key'), $this->username, 'portscan');
             // 获取未扫描端口的域名
-            $tmp = (new Sub())->where('portscan', 'no_scan')->find();
+            $tmp = (new Sub())->where('portscan', 'in', ['no_scan', '', null])->find();
             if(!$tmp){
                 $this->error('无数据', []);
             }else{
@@ -197,6 +199,7 @@ class Task extends Api
             }elseif ($port_data['code']==0){
                 // 存储上传数据失败日志
                 $port_data['count'] = 0;
+                (new Sub())->where(['subdomain'=>$port_data['domain']])->update(['portscan'=>'failed']);
                 (new Log())->add_log($port_data, 'portscan');
             }
             $this->success('返回成功', ['port_data'=>$port_data]);
@@ -257,11 +260,46 @@ class Task extends Api
             }elseif ($alive_data['code'] == 0){
                 // 存储上传数据失败日志
                 $alive_data['count'] = 0;
+                (new Sub())->where(['subdomain'=>$alive_data['domain']])->update(['alivescan'=>'failed']);
                 (new Log())->add_log($alive_data, 'alivescan');
             }
             $this->success('返回成功', ['alive_data'=>$alive_data]);
         }
 
+    }
+
+    /**
+     * 获取用户批量添加的子域名
+     *
+     */
+
+    public function updateIP2Domain(){
+        if($this->request->isPost()) {
+            $domain_data = json_decode(file_get_contents('php://input'), true);
+            $domain = $domain_data['domain'];
+            $ip = $domain_data['ip'];
+            $city = $domain_data['city'];
+            $is_cdn = $domain_data['is_cdn'];
+            $is_private = $domain_data['is_private'];
+            $data = [
+                'subdomain_ip'=>$ip,
+                'city'=>$city,
+            ];
+            if($is_private){
+                $data['portscan'] = 'is_private';
+                $data['alivescan'] = 'is_private';
+            }else if($is_cdn){
+                $data['portscan'] = 'is_cdn';
+                $data['alivescan'] = 'no_scan';
+            }else{
+                $data['alivescan'] = 'no_scan';
+            }
+            if((new Sub())->isUpdate(true)->save($data, ['subdomain'=>$domain])) {
+                $this->success('更新成功');
+            }else{
+                $this->error('未找到数据');
+            }
+        }
     }
 
     public function demo(){

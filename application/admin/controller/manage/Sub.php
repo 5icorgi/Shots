@@ -2,6 +2,8 @@
 
 namespace app\admin\controller\manage;
 
+use app\admin\model\src\Project;
+use app\admin\model\src\Domain;
 use app\common\controller\Backend;
 
 /**
@@ -19,14 +21,47 @@ class Sub extends Backend
     protected $ports_model = null;
     protected $alive_model = null;
 
+
     public function _initialize($ids = null)
     {
         parent::_initialize();
         $this->model = new \app\admin\model\manage\Sub;
         $this->ports_model = new \app\admin\model\manage\Ports;
         $this->alive_model = new \app\admin\model\manage\Alive;
+        $project_list = (new Project())->getProjectData();
+        $this->view->assign('project_list', $project_list);
 
     }
+
+    public function add()
+    {
+        if ($this->request->isPost()) {
+            $params = $this->request->post("row/a");
+            if ($params) {
+                $count = 0;
+                $subdomain_data = str_replace("\r", '', $params['domain']);
+                $project_name = $params['project_name'];
+                $subdomain_list = explode("\n", $subdomain_data);
+                foreach($subdomain_list as $k => $v){
+                    $subdomain_list[$k] = strtolower(trim($v));
+                }
+                $exists_domain = (new Domain())->existsDomain($subdomain_list);
+                $new_domain_list = array_diff($subdomain_list, $exists_domain);
+                $domain_list = collection((new Domain())->field('domain')->select())->toArray();
+                foreach ($new_domain_list as $value){
+                    foreach ($domain_list as $domain){
+                        $pattern = str_replace('.', '\\.', $domain['domain']);
+                        if(preg_match("/({$pattern})$/is", $value)){
+                            $this->model->addSubDomian($domain['domain'], $value, '', '', '', '');
+                        }
+                    }
+                }
+                $this->success('添加成功');
+            }
+        }
+        return $this->view->fetch();
+    }
+
     public function edit($ids = null)
     {
         $row = $this->model->get($ids);
@@ -54,10 +89,6 @@ class Sub extends Backend
             $this->error();
         }
         return $this->view->fetch();
-    }
-
-    public function add()
-    {
     }
 
     public function add_ports($ids = null)
@@ -130,6 +161,8 @@ class Sub extends Backend
     {
         if($ids){
             $where['id'] = ['in', $ids];
+            $where['alivescan'] = ['not in', ['is_private']];
+            $where['portscan'] = ['not in', ['is_private', 'is_cdn']];
             $data = ['alivescan' => 'no_scan', 'portscan' => 'no_scan'];
             $this->model->isUpdate(true)->save($data, $where);
             $this->success('重置成功');

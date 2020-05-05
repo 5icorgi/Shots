@@ -53,17 +53,5 @@ class App extends Model
             $data = ($timing > 480) ? ['status'=>0] : ['status'=>1];
             $this->isUpdate(true)->save($data, $where);
         }
-
-
     }
-
-
-    
-
-
-
-
-
-
-
 }
