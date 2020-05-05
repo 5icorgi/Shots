@@ -30,7 +30,7 @@ class App extends Backend
     {
     }
 
-    public function del($ids = "")
+    public function edit($ids = "")
     {
     }
 
